@@ -1,0 +1,118 @@
+---
+title: "MacroEconStats"
+output: html_document
+---
+SPECIFICATIONS:
+
+1. 
+
+
+```{r}
+# CHUNK 1
+
+# Loading formattable to access the percent() function used in the matrix below 
+library(formattable)
+# Loading ggplot2 in case data visualization output would be needed in the future
+library(ggplot2)
+# Loading dplyr into workspace
+library(dplyr)
+#Loading DataTables library
+library(DT)
+#Loading library readr
+library(readr)
+
+total_jobs <- read_csv("C:/Users/vsoopr1/Desktop/R Projects/dashboard/MacroEconStats/toal_jobs_filtered.csv")
+total_TEEM <- read_csv("C:/Users/vsoopr1/Desktop/R Projects/dashboard/MacroEconStats/TEEM_compiled.csv")
+population_stats <- read_csv("C:/Users/vsoopr1/Desktop/R Projects/dashboard/MacroEconStats/population_stats.csv")
+gmp_total <- read_csv("C:/Users/vsoopr1/Desktop/R Projects/dashboard/MacroEconStats/gmp_total.csv")
+
+total_jobs <- data.frame(total_jobs)
+total_TEEM <- data.frame(total_TEEM)
+total_pop <- data.frame(population_stats)
+total_gmp <- data.frame(gmp_total)
+
+```
+
+
+
+```{r}
+# CHUNK 2
+
+# Calculating 5-year Job Growth rate
+
+five_year_total_job_growth <- c(numeric(20))
+for (i in 1:20) {
+  five_year_total_job_growth[i] = (total_jobs$x[i] - total_jobs$x.5[i])/total_jobs$x.5[i]
+}
+
+# Calculating YOY Job Growth rate
+
+yoy_total_job_growth <- c(numeric(20))
+for (i in 1:20) {
+  yoy_total_job_growth[i] <- (total_jobs$x[i] - total_jobs$x.1[i]) / total_jobs$x.1[i]
+}
+
+# Calculating TEEM jobs as a % of total jobs
+
+TEEM_percentage_total <- c(numeric(20))
+for (i in 1:20) {
+  TEEM_percentage_total[i] <- (total_TEEM$x[i]/total_jobs$x[i])
+}
+
+# Calculating 5-year TEEM Job Growth rate
+
+five_year_TEEM_growth <- c(numeric(20))
+for (i in 1:20) {
+  five_year_TEEM_growth[i] <- (total_TEEM$x[i] - total_TEEM$x.5[i]) / total_TEEM$x[i]
+}
+
+# Calculating YOY TEEM Job Growth
+yoy_TEEM_growth <- c(numeric(20))
+for (i in 1:20) {
+  yoy_TEEM_growth[i] <- (total_TEEM$x[i] - total_TEEM$x.1[i]) / total_TEEM$x.1[i]
+}
+
+# Calculating GMP/Emp
+
+gmp_by_emp <- c(numeric(20))
+for (i in 1:20) {
+  gmp_by_emp[i] <- total_gmp$x[i] / total_jobs$x[i]
+}
+
+# Calculating GMP growth
+
+gmp_growth <- c(numeric(20))
+for (i in 1:20) {
+  gmp_growth[i] <- (total_gmp$x[i] - total_gmp$x.5[i])/total_gmp$x.5[i]
+}
+
+# Converting total GMP in Billion figures
+
+total_gmp_1 <- total_gmp$x / 1000
+```
+
+
+```{r}
+# CHUNK 3
+
+# Bringing it all together
+
+macro_econ_stats <- data.frame(population_stats$Population, accounting(total_jobs$x, digits=1), percent(five_year_total_job_growth), percent(yoy_total_job_growth), accounting(total_TEEM$x, digits=1), percent(TEEM_percentage_total) ,percent(five_year_TEEM_growth), percent(yoy_TEEM_growth), currency(total_gmp_1, digits=1), currency(gmp_by_emp, digits=1), percent(gmp_growth))
+rownames(macro_econ_stats) <- c("Boulder", "San Francisco", "Washington DC", "San Jose", "Boston", "Raleigh/Durham", "Austin", "Oakland", "Denver", "Seattle", "New York", "Portland", "Atlanta", "San Diego", "Dallas", "Nashville", "Pittsburgh", "Salt Lake City", "Houston", "Los Angeles")
+colnames(macro_econ_stats) <- c("Population", "# Jobs in '000s (2018)", "5 Year Job Growth Rate", "YOY Job Growth", "# TEEM Jobs (2018)", "TEEM Jobs as a % of Total Jobs", "5 Year TEEM Job Growth Rate", "YOY TEEM Job Growth", "GMP ($ Bn)", "GMP/Emp", "GMP Growth over last 5 years")
+
+formattable(macro_econ_stats, list(
+  
+  "5 Year Job Growth Rate" = color_tile("transparent", "orange"),
+  "YOY Job Growth" = color_tile("cyan", "yellow"),
+  "5 Year TEEM Job Growth Rate" = color_tile("white", "red"),
+  "YOY TEEM Job Growth" = color_tile("cyan", "yellow"),
+  "GMP ($ Bn)" = color_tile("cyan", "blue")
+  )
+
+)
+
+
+```
+
+

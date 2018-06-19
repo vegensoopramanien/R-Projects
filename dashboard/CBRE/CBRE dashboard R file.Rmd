@@ -1,0 +1,216 @@
+---
+title: "IC Markets- Office Fundamentals (Source: CBRE-EA)"
+author: "Vegen Soopramanien"
+output: html_document
+---
+
+### Specifications
+
+1. In DataView (CBRE-EA), make sure to choose from your settings the 19 cities that we want here (KEEP THE ORDER):
+  + __Atlanta__  
+  + __Austin__  
+  + __Boston__  
+  + __Dallas__  
+  + __Denver__  
+  + __Houston__  
+  + __LA__  
+  + __Nashville__  
+  + __NYC__  
+  + __Oakland__  
+  + __Pittsburgh__  
+  + __Portland__  
+  + __Raaleigh__  
+  + __Salt Lake city__  
+  + __San Diego__  
+  + __San Francisco__  
+  + __San Jose__  
+  + __Seattle__  
+  + __DC__  
+  
+Exclude all the other cities.
+
+(1) Choose: Report Menu > Cross Market Detail > "Time Series: History" & Choose Variable: "Completions" (Levels, NOT Rates) > Click on "Add to Export"
+
+(2) Choose: Report Menu > Cross Market Detail > "Time Series: History" & Choose Variable: "Vacancy" (Rates, NOT Levels) > Click on "Add to Export"
+
+(3) Choose: Report Menu > Cross Market Detail > "Time Series: Forecast" & Choose Variable: "Completions" (Levels, NOT Rates) > Click on "Add to Export"
+
+(4) Choose: Report Menu > Cross Market Snapshot > Report: "Asking Rent summary" > Click on "Add to Export"
+
+Create a new sheet and copy paste data from each of the 4 reports (name column A as "Market" and it includes names of the 19 cities in the same order as above). 
+
+**comp x** = completion for Current quarter/year (say 18Q1)  
+**comp x-1** = completion in 2017  
+**comp x-2** = completion in 2016  
+.....  
+**comp x-6** = completion in 2012  
+**comp hist 2 years** = historical avg of completions over last 2 years  
+**comp hist 5 years** = historical avg of completions over last 5 years  
+  
+**comp forecast X+1** = completions forecast for 2019  
+...  
+**comp forecast x+5** = completions forecast for 2023  
+**comp forecast avg 2 years** = forecast completions for next 2 years  
+**comp forecast avg 5 years** = forecast completions for next 5 years  
+  
+**vacancy x** = vacancy in current quarter/year  
+**vacancy x-1** = vacancy last year  
+**vacancy x-2** = vacancy two years ago  
+...  
+**vacancy hist 2 years** = historical vacancies for last 2 years  
+**vacancy hist 5 years** = historical vacancies for last 5 years  
+  
+**gross rent current qtr**  
+**gross rent last qtr**  
+**net rent current qtr**  
+**net rent last qtr**  
+  
+**inventory x**  
+  
+Save the new excel document with all the above data as a *.csv document under the name "cbre_db_data"
+  
+Import the document here into the workspace and make sure you have installed the required packages before running code CHUNK 1.
+  
+Required Packages:
+  + __digest__  
+  + __formattable__  
+  + __ggplot2__  
+  + __dplyr__
+  + __DT__   
+  + __readr__ 
+  
+  
+2. To get data for Net Asking Rents to calculate Historical Rent Growth, unfortunately it's still tedious. Again, make sure to only include the 19 cities we want in your selection and exclude all other cities. 
+  
+(1) Choose: Report Menu > Market Trends: History >  **Start with Atlanta** >Report: "Market Fundamentals" > Click on "Add to Export"  
+  
+(2) Repeat the process for each subsequent cities **IN SAME ORDER AS GIVEN IN THE DROP DOWN MENU** until you have 19 reports waiting to be exported in queue.  
+  
+(3) Download the report with 19 sheets, then create a new sheet, and copy paste from each city's sheet in the same order only the **Net Asking Rent ($/sf)** column, so in your new sheet, you have the first column that contains all the years from 1988 to current year (Name the first column "Year"), and each adjacent column by the name of the Market for which you're copy pasting the rent (e.g. Year | atl | aus | bos | dall | den | hous| ...| dc). You can delete all the rows for the years before 2010 and keep only those years after 2010. Then copy paste this sheet into a new workbook and **Transpose** it. For the city names you use, it doesn't matter, so long as you keep the order of the cities as in the list above.  
+  
+(4) **Name the last column (that contains rent for current year) as "rent_x", column before that "rent_x-1", "rent_x-2", "rent_x-3", .....**
+Save the new workbook as a *.csv document under the name "asking_rents". Import it here.  
+  
+(5) Feel free to modify the column names in CHUNK 4.  
+  
+```{r, echo=FALSE}
+
+# CHUNK 1
+
+# Loading formattable to access the percent() function used in the matrix below 
+library(formattable)
+# Loading ggplot2 in case data visualization output would be needed in the future
+library(ggplot2)
+# Loading dplyr into workspace
+library(dplyr)
+#Loading DataTables library
+library(DT)
+#Loading library readr
+library(readr)
+
+cbre_db_data <- read_csv("C:/Users/vsoopr1/Desktop/R Projects/dashboard/CBRE/cbre_db_data.csv")
+cbre_db_rent <- read.csv("C:/Users/vsoopr1/Desktop/R Projects/dashboard/CBRE/asking_rents.csv")
+
+dat2 <- data.frame(cbre_db_data)
+dat3 <- data.frame(cbre_db_rent)
+```
+
+```{r, echo=FALSE}
+# CHUNK 2
+
+inventory <- dat2$inventory.x
+current_occ <- 100 - dat2$vacancy.x
+five_year_avg_occ <- 100 - dat2$vacancy.hist.5.years
+new_supply_last_2_years <- dat2$comp.x.1 + dat2$comp.x.2
+new_supply_as_percentage_total <- new_supply_last_2_years / inventory
+new_supply_2_years_forward <- dat2$comp.forecast.x.1 + dat2$comp.forecast.x.2
+
+
+
+```
+
+```{r, echo=FALSE}
+# CHUNK 3
+
+# Code to calculate current rent for current quarter
+rent_current_qtr <- c(numeric(19))
+rent_gross_or_net <- rep(NA, 19)
+
+for (i in 1:19) {
+  
+   if (dat2$gross.rent.current.qtr[i] > dat2$net.rent.current.qtr[i]) {
+        rent_current_qtr[i] = dat2$gross.rent.current.qtr[i]
+        rent_gross_or_net[i] = "Gross"
+  
+   } else {
+    rent_current_qtr[i] = dat2$net.rent.current.qtr[i]
+    rent_gross_or_net[i] = "Net"
+  }
+}
+
+rent_growth_ytd <- c(numeric(19))
+
+for (i in 1:19) {
+  
+  if (dat2$gross.rent.current.qtr[i] > dat2$net.rent.current.qtr[i]) {
+    rent_growth_ytd[i] = (dat2$gross.rent.current.qtr[i] - dat2$gross.rent.last.qtr[i]) / dat2$gross.rent.last.qtr[i]
+  } else {
+    rent_growth_ytd[i] = (dat2$net.rent.current.qtr[i] - dat2$net.rent.last.qtr[i]) / dat2$net.rent.last.qtr[i]
+  }
+}
+
+rent_growth_2017 <- c(numeric(19))
+
+for (i in 1:19) {
+  rent_growth_2017[i] = (dat3$rent_x.1[i] - dat3$rent_x.2[i])/dat3$rent_x.2[i]
+}
+
+
+
+rent_growth_2016 <- c(numeric(19))
+
+for (i in 1:19) {
+  rent_growth_2016[i] = (dat3$rent_x.2[i] - dat3$rent_x.3[i])/dat3$rent_x.3[i]
+  
+}
+```
+
+
+
+```{r, echo=FALSE}
+# CHUNK 4
+
+# Bringing it all together
+
+cbre_db <- data.frame(accounting(inventory, digits=0), current_occ, five_year_avg_occ, accounting(new_supply_last_2_years, digits=0), percent(new_supply_as_percentage_total), accounting(new_supply_2_years_forward, digits=0), rent_gross_or_net, currency(rent_current_qtr), percent(rent_growth_2016), percent(rent_growth_2017), percent(rent_growth_ytd))
+rownames(cbre_db) <- dat2$Market
+colnames(cbre_db) <- c("Inventory (000s)", "Current Occupancy (18Q1) %", "5-Yr Avg Occupancy %", "New Supply last 2 years 16-17", "New Supply as % of Total", "New supply two years forward 19-20", "Rent: Gross or Net", "Current Rents (18Q1)", "Rent Growth since 2016", "Rent Growth since 2017", "Rent Growth YTD 18Q1")
+
+
+formattable(cbre_db, list(
+  "Current Occupancy (18Q1) %" = formatter(
+    "span",
+    style = x ~ ifelse(x>90,
+                       style(font.weight="bold"), NA)),
+  "New Supply as % of Total" = color_tile("white", "orange"),
+  
+  "Rent Growth since 2016" = formatter(
+    "span",
+    style = x ~ style(color=ifelse(x<0, "red", "green")),
+    x ~ icontext(ifelse(x<0, "arrow-down", "arrow-up"), x)),
+  
+  "Rent Growth since 2017" = formatter(
+    "span",
+    style = x ~ style(color=ifelse(x<0, "red", "green")),
+    x ~ icontext(ifelse(x<0, "arrow-down", "arrow-up"), x)),
+  
+  "Rent Growth YTD 18Q1" = formatter(
+    "span",
+    style = x ~ style(color=ifelse(x<0, "red", "green")),
+    x ~ icontext(ifelse(x<0, "arrow-down", "arrow-up"), x))
+  )
+
+)
+
+```
+

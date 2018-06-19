@@ -1,0 +1,205 @@
+---
+title: "db_code1"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+
+```{r}
+# Loading formattable to access the percent() function used in the matrix below 
+library(formattable)
+# Loading ggplot2 in case data visualization output would be needed in the future
+library(ggplot2)
+# Loading dplyr into workspace
+library(dplyr)
+#Loading DataTables library
+library(DT)
+
+```
+
+
+```{r}
+library(readr)
+Working2_DB_2 <- read_csv("C:/Users/vsoopr1/Desktop/R Projects/dashboard/Working2_DB_2.csv")
+dashboard_qtr_data <- read.csv("C:/Users/vsoopr1/Desktop/R Projects/dashboard/dashboard_qtr_data.csv", stringsAsFactors = FALSE)
+data_1 <- data.frame(Working2_DB_2)
+data_2 <- data.frame(dashboard_qtr_data, na.rm=TRUE)
+```
+
+# Model Key
+
+We note that the model used for the excel template uses the following key:
+
+### Markets key:
+
+New York : nyc   
+San Francisco: sf   
+Washington DC: dc  
+Boston: bos  
+San Jose: sj  
+Los Angeles: la  
+San Diego: sd  
+Seattle: sea  
+Houston: hous  
+Austin: aus  
+Oakland: oak  
+Dallas: dal  
+Portland: port  
+Raleigh/Durham: rd  
+Nashville: nash  
+Denver: den  
+Salt Lake City: slc  
+Pittsburgh: pitts  
+Atlanta: atl  
+
+### Metrics key:
+
+prop  
+vol  
+units  
+psf  
+cap rate  
+
+
+```{r, eval=FALSE}
+
+# Vectors of dataset for $/sf- we use quaterly data to generate these peak prices per sf
+
+vector_psf <- c(max(data_2$nyc.psf), max(data_2$sf.psf), max(data_2$dc.psf), max(data_2$bos.psf), max(data_2$sj.psf), max(data_2$la.psf), max(data_2$sd.psf), max(data_2$sea.psf), max(data_2$hous.psf), max(data_2$aus.psf), max(data_2$dall.psf), max(data_2$rd.psf), max(data_2$nash.psf), max(data_2$slc.psf), max(data_2$pitts.psf), max(data_2$atl.psf))
+
+vector_psf
+
+```
+
+
+
+
+
+
+```{r}
+#Try to debug this piece of code???
+
+cap_rate_calculations <- function() {
+  cap_rate_matrix <- matrix(data = NA, ncol = 3, nrow = nrow(data_1))  
+  for (i in c(7, 15, 17)) {
+      x <- c(data_1$nyc.cap.rate[i], data_1$sf.cap.rate[i], data_1$dc.cap.rate[i], data$bos.cap.rate[i], data$sj.cap.rate[i], data$la.cap.rate[i], data$sd.cap.rate[i], data_1$sea.cap.rate[i], data_1$hou.cap.rate[i], data_1$aus.cap.rate[i], data_1$oak.cap.rate[i], data_1$dall.cap.rate[i], data_1$ral.cap.rate[i], data_1$nash.cap.rate[i], data_1$slc.cap.rate[i], data_1$pitts.cap.rate[i], data_1$alt.cap.rate[i])
+cap_rate_avg
+      cbind(cap_rate_matrix, x)
+    }
+  return (cap_rate_matrix)
+}
+```
+
+
+
+
+
+
+
+```{r} 
+# Matrix of cap rates for years 2007, 2015, 2017 to 0 decimal places (approximation on Q4)
+
+cr_avg_07 <- c(data_1$nyc.cap.rate[7], data_1$sf.cap.rate[7], data_1$dc.cap.rate[7], data_1$bos.cap.rate[7], data_1$sj.cap.rate[7], data_1$la.cap.rate[7], data_1$sd.cap.rate[7], data_1$sea.cap.rate[7], data_1$hou.cap.rate[7], data_1$aus.cap.rate[7], data_1$oak.cap.rate[7], data_1$dall.cap.rate[7], data_1$ral.cap.rate[7], data_1$nash.cap.rate[7], data_1$slc.cap.rate[7], data_1$pitts.cap.rate[7], data_1$alt.cap.rate[7])
+
+
+Cr_avg_15 <- c(data_1$nyc.cap.rate[15], data_1$sf.cap.rate[15], data_1$dc.cap.rate[15], data_1$bos.cap.rate[15], data_1$sj.cap.rate[15], data_1$la.cap.rate[15], data_1$sd.cap.rate[15], data_1$sea.cap.rate[15], data_1$hou.cap.rate[15], data_1$aus.cap.rate[15], data_1$oak.cap.rate[15], data_1$dall.cap.rate[15], data_1$ral.cap.rate[15], data_1$nash.cap.rate[15], data_1$slc.cap.rate[15], data_1$pitts.cap.rate[15], data_1$alt.cap.rate[15])
+
+
+Cr_avg_17 <- c(data_1$nyc.cap.rate[17], data_1$sf.cap.rate[17], data_1$dc.cap.rate[17], data_1$bos.cap.rate[17], data_1$sj.cap.rate[17], data_1$la.cap.rate[17], data_1$sd.cap.rate[17], data_1$sea.cap.rate[17], data_1$hou.cap.rate[17], data_1$aus.cap.rate[17], data_1$oak.cap.rate[17], data_1$dall.cap.rate[17], data_1$ral.cap.rate[17], data_1$nash.cap.rate[17], data_1$slc.cap.rate[17], data_1$pitts.cap.rate[17], data_1$alt.cap.rate[17])
+
+cap_rates_avg <- cbind(cr_avg_07, Cr_avg_15, Cr_avg_17)
+rownames(cap_rates_avg) <- c("NYC", "SanFrancisco", "DC", "Boston", "San Jose", "LA", "San Diego", "Seattle", "Houston", "Austin", "Oakland", "Dallas", "Raleigh", "Nashville", "Salt Lake City", "Pittsburgh", "Atlanta")
+cap_rates_avg_percent <- percent(cap_rates_avg, digits=0)
+cap_rates_avg_percent
+
+
+```
+
+
+```{r}
+cr_avg_07 <- c(data_1$nyc.cap.rate[7], data_1$sf.cap.rate[7], data_1$dc.cap.rate[7], data_1$bos.cap.rate[7], data_1$sj.cap.rate[7], data_1$la.cap.rate[7], data_1$sd.cap.rate[7], data_1$sea.cap.rate[7], data_1$hou.cap.rate[7], data_1$aus.cap.rate[7], data_1$oak.cap.rate[7], data_1$dall.cap.rate[7], data_1$ral.cap.rate[7], data_1$nash.cap.rate[7], data_1$slc.cap.rate[7], data_1$pitts.cap.rate[7], data_1$alt.cap.rate[7])
+
+cr_avg_15 <- c(data_1$nyc.cap.rate[15], data_1$sf.cap.rate[15], data_1$dc.cap.rate[15], data_1$bos.cap.rate[15], data_1$sj.cap.rate[15], data_1$la.cap.rate[15], data_1$sd.cap.rate[15], data_1$sea.cap.rate[15], data_1$hou.cap.rate[15], data_1$aus.cap.rate[15], data_1$oak.cap.rate[15], data_1$dall.cap.rate[15], data_1$ral.cap.rate[15], data_1$nash.cap.rate[15], data_1$slc.cap.rate[15], data_1$pitts.cap.rate[15], data_1$alt.cap.rate[15])
+
+cr_avg_17 <- c(data_1$nyc.cap.rate[17], data_1$sf.cap.rate[17], data_1$dc.cap.rate[17], data_1$bos.cap.rate[17], data_1$sj.cap.rate[17], data_1$la.cap.rate[17], data_1$sd.cap.rate[17], data_1$sea.cap.rate[17], data_1$hou.cap.rate[17], data_1$aus.cap.rate[17], data_1$oak.cap.rate[17], data_1$dall.cap.rate[17], data_1$ral.cap.rate[17], data_1$nash.cap.rate[17], data_1$slc.cap.rate[17], data_1$pitts.cap.rate[17], data_1$alt.cap.rate[17])
+
+peak_price_per_sf <- c(max(data_1$nyc.price.sf), max(data_1$sf.price.sf), max(data_1$dc.price.per.sf), max(data_1$bos.price.sf), max(data_1$sj.price.sf), max(data_1$la.price.sf), max(data_1$sd.price.sf), max(data_1$sea.price.sf), max(data_1$hou.price.sf), max(data_1$aus.price.sf), max(data_1$oak.price.sf), max(data_1$dall.price.sf), max(data_1$ral.price.sf), max(data_1$nash.price.sf), max(data_1$slc.price.sf), max(data_1$pitts.price.sf), max(data_1$atl.price.sf))
+
+s_vol_15 <- c(data_1$nyc.vol[15], data_1$sf.vol[15], data_1$dc.Vol[15], data_1$bos.vol[15], data_1$sj.vol[15], data_1$la.vol[15], data_1$sd.vol[15], data_1$sea.vol[15], data_1$hou.vol[15], data_1$aus.vol[15], data_1$oak.vol[15], data_1$dall.vol[15], data_1$ral.vol[15], data_1$nash.vol[15], data_1$slc.vol[15], data_1$pitts.vol[15], data_1$atl.vol[15])
+sales_vol_15 <- currency(s_vol_15, symbol="$", digits=0, sep=" ")
+
+s_vol_16 <- c(data_1$nyc.vol[16], data_1$sf.vol[16], data_1$dc.Vol[16], data_1$bos.vol[16], data_1$sj.vol[16], data_1$la.vol[16], data_1$sd.vol[16], data_1$sea.vol[16], data_1$hou.vol[16], data_1$aus.vol[16], data_1$oak.vol[16], data_1$dall.vol[16], data_1$ral.vol[16], data_1$nash.vol[16], data_1$slc.vol[16], data_1$pitts.vol[16], data_1$atl.vol[16])
+sales_vol_16 <- currency(s_vol_16, symbol="$", digits=0, sep=" ")
+
+s_vol_17 <- c(data_1$nyc.vol[17], data_1$sf.vol[17], data_1$dc.Vol[17], data_1$bos.vol[17], data_1$sj.vol[17], data_1$la.vol[17], data_1$sd.vol[17], data_1$sea.vol[17], data_1$hou.vol[17], data_1$aus.vol[17], data_1$oak.vol[17], data_1$dall.vol[17], data_1$ral.vol[17], data_1$nash.vol[17], data_1$slc.vol[17], data_1$pitts.vol[17], data_1$atl.vol[17])
+sales_vol_17 <- currency(s_vol_17, symbol="$", digits=0, sep=" ")
+
+s17_percent_s16 <- s_vol_17 / s_vol_16
+
+dashboard_1 <- cbind(cr_avg_07, cr_avg_15, cr_avg_17,peak_price_per_sf, s_vol_15, s_vol_16, s_vol_17, s17_percent_s16)
+rownames(dashboard_1) <- c("NYC", "SanFrancisco", "DC", "Boston", "San Jose", "LA", "San Diego", "Seattle", "Houston", "Austin", "Oakland", "Dallas", "Raleigh", "Nashville", "Salt Lake City", "Pittsburgh", "Atlanta")
+
+datatable(dashboard_1) %>% formatCurrency(c(4, 5, 6, 7), currency="$") %>% formatPercentage(c(1, 2, 3, 8), digits=0)
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+s_vol_15 <- c(data_1$nyc.vol[15], data_1$sf.vol[15], data_1$dc.Vol[15], data_1$bos.vol[15], data_1$sj.vol[15], data_1$la.vol[15], data_1$sd.vol[15], data_1$sea.vol[15], data_1$hou.vol[15], data_1$aus.vol[15], data_1$oak.vol[15], data_1$dall.vol[15], data_1$ral.vol[15], data_1$nash.vol[15], data_1$slc.vol[15], data_1$pitts.vol[15], data_1$atl.vol[15])
+sales_vol_15 <- currency(s_vol_15, symbol="$", digits=0, sep=" ")
+
+s_vol_16 <- c(data_1$nyc.vol[16], data_1$sf.vol[16], data_1$dc.Vol[16], data_1$bos.vol[16], data_1$sj.vol[16], data_1$la.vol[16], data_1$sd.vol[16], data_1$sea.vol[16], data_1$hou.vol[16], data_1$aus.vol[16], data_1$oak.vol[16], data_1$dall.vol[16], data_1$ral.vol[16], data_1$nash.vol[16], data_1$slc.vol[16], data_1$pitts.vol[16], data_1$atl.vol[16])
+sales_vol_16 <- currency(s_vol_16, symbol="$", digits=0, sep=" ")
+
+s_vol_17 <- c(data_1$nyc.vol[17], data_1$sf.vol[17], data_1$dc.Vol[17], data_1$bos.vol[17], data_1$sj.vol[17], data_1$la.vol[17], data_1$sd.vol[17], data_1$sea.vol[17], data_1$hou.vol[17], data_1$aus.vol[17], data_1$oak.vol[17], data_1$dall.vol[17], data_1$ral.vol[17], data_1$nash.vol[17], data_1$slc.vol[17], data_1$pitts.vol[17], data_1$atl.vol[17])
+sales_vol_17 <- currency(s_vol_17, symbol="$", digits=0, sep=" ")
+
+```
+
+
+
+
+
+
+Coding for quarterly data
+
+```{r, eval=FALSE}
+
+
+cr_avg_07 <- c(mean(data_2$nyc.cr[25:28], na.rm=TRUE), mean(data_2$sd.cr.1[25:28], na.rm=TRUE), mean(data_2$dc.cr[25:28], na.rm=TRUE), mean(data_2$bos.cr[25:28], na.rm=TRUE), mean(data_2$sj.cr[25:28], na.rm=TRUE), mean(data_2$la.cr[25:28], na.rm=TRUE), mean(data_2$sd.cr.1[25:28], na.rm=TRUE), mean(data_2$sea.cr[25:28], na.rm=TRUE), mean(data_2$hous.cr[25:28], na.rm=TRUE), mean(data_2$aus.cr[25:28], na.rm=TRUE), mean(data_2$dall.cr[25:28], na.rm=TRUE), mean(data_2$port.cr[25:28], na.rm=TRUE), mean(data_2$rd.cr[25:28], na.rm=TRUE), mean(data_2$nash.cr[25:28], na.rm=TRUE), mean(data_2$den.cr[25:28], na.rm=TRUE), mean(data_2$den.cr[25:28], na.rm=TRUE), mean(data_2$slc.cr[25:28], na.rm=TRUE), mean(data_2$pitts.cr[25:28], na.rm=TRUE), mean(data_2$atl.cr[25:28], na.rm=TRUE))
+
+
+cr_avg_07
+
+
+
+
+
+```
+
+
+
+
+
+
+

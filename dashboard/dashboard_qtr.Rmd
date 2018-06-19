@@ -1,0 +1,254 @@
+---
+title: "IC Markets- Office Capital Markets (RCA Data)"
+author: "Vegen Soopramanien"
+output: html_document
+---
+
+### Specifications:
+
+1. Download the dataset from RCA, convert it into a standard format (may need to transpose) with __rows as Quarters__ and __columns as variables__  (e.g. __nyc cr__ => NYC capitalization rate- all lowercase characters, with a blank space between the city code and the variable code- see the key below for the codes). 
+
+2. Find and Replace all #N/A as 0.
+
+3. Save the data file as a *.csv document under the name __"dashboard_qtr_data_2"__
+
+4. Import the data file here and Copy paste the file path in the read.csv line in Chunk 1 below (see #Note 4)
+
+5. Ensure the first column of the dataset (that contains the different quarters) is labelled $X1$ (I think it is automatically labelled like that when you import the file in the workspace, but just to make sure, since I reference this variable in Chunk 5 to obtain the quarters for which the price per sf peaked)
+
+6. Run the first chunk of code below to load the multiple packages used in this project and to create a data frame from the data set (that I called dat_1 below- **DO NOT CHANGE THIS DESIGNATION**). Make sure the following packages are installed first:
+  + __digest__  
+  + __formattable__  
+  + __ggplot2__  
+  + __dplyr__
+  + __DT__ (VERY IMPORTANT)  
+  + __readr__ 
+
+
+7. __The indices used in Chunk 4 ought to be modified with care__. 'x' returns the index of the last row (i.e. the index number of the current quarter). Say we're in 18Q2, then to get average cap rate for 2017, we call the function 'strip_data_cr' using arguments (x-5, x-2) => strip_data_cr(x-5, x-2).
+
+8. Note that all codes have been hidden from the html output (I used echo=FALSE in the code chunk's header) but they are readable here. 
+ 
+9. Make sure the order of the columns for the variables in the table are preserved: 
+  + sales_vol_16Q1_Ms (Chunk 3)   
+  + sales_vol_17Q1_Ms (Chunk 3)   
+  + sales_vol_18Q1_YTD_Ms (Chunk 3)   
+  + vol_2018_2017_percent (Chunk 3)   
+  + cr_avg_07 (Chunk 4)   
+  + cr_avg_16 (Chunk 4)   
+  + cr_avg_18Q1_YTD (Chunk 4)   
+  + peak_psf (Chunk 5)   
+  + date_peak_market (Chunk 5)  
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+# CHUNK 1
+
+# Loading formattable to access the percent() function used in the matrix below 
+library(formattable)
+# Loading ggplot2 in case data visualization output would be needed in the future
+library(ggplot2)
+# Loading dplyr into workspace
+library(dplyr)
+#Loading DataTables library
+library(DT)
+#Loading library readr
+library(readr)
+
+dashboard_qtr_data_2 <- read_csv("C:/Users/vsoopr1/Desktop/R Projects/dashboard/dashboard_qtr_data_2.csv")  #Note 4
+
+dat_1 <- data.frame(dashboard_qtr_data_2)
+```
+
+### Model Key
+
+We note that the model used for the *.csv template uses the following key:
+
+#### Markets key:
+
+New York : nyc   
+San Francisco: sf   
+Washington DC: dc  
+Boston: bos  
+San Jose: sj  
+Los Angeles: la  
+San Diego: sd  
+Seattle: sea  
+Houston: hous  
+Austin: aus  
+Dallas: dal  
+Portland: port  
+Raleigh/Durham: rd  
+Nashville: nash  
+Denver: den  
+Salt Lake City: slc  
+Pittsburgh: pitts  
+Atlanta: atl  
+
+```{r, echo=FALSE}
+# CHUNK 2
+
+# Code to get peak price per square foot
+
+peak_psf <- c(max(dat_1$nyc.psf), max(dat_1$sf.psf), max(dat_1$dc.psf), max(dat_1$bos.psf), max(dat_1$sj.psf), max(dat_1$la.psf), max(dat_1$sd.psf), max(dat_1$sea.psf), max(dat_1$hous.psf), max(dat_1$aus.psf), max(dat_1$dall.psf), max(dat_1$port.psf), max(dat_1$rd.psf), max(dat_1$nash.psf), max(dat_1$den.psf), max(dat_1$slc.psf), max(dat_1$pitts.psf), max(dat_1$atl.psf))
+```
+
+```{r, echo=FALSE}
+
+# CHUNK 3
+
+# Code to get sales volumes for Q(x), Q(x-4), Q(x-8)
+
+x <- nrow(dat_1)
+
+strip_data_svol <- function(a) {
+  
+    y <- c(dat_1$nyc.vol[a], dat_1$sf.vol[a], dat_1$dc.vol[a], dat_1$bos.vol[a], dat_1$sj.vol[a], dat_1$la.vol[a], dat_1$sd.vol[a], dat_1$sea.vol[a], dat_1$hous.vol[a], dat_1$aus.vol[a], dat_1$dall.vol[a], dat_1$port.vol[a], dat_1$rd.vol[a], dat_1$nash.vol[a], dat_1$den.vol[a], dat_1$slc.vol[a], dat_1$pitts.vol[a], dat_1$atl.vol[a])
+    return (y)
+  }
+
+sales_vol_18Q1_YTD_Ms <- strip_data_svol(x) /1000000       # we start with the latest quarter
+sales_vol_17Q1_Ms <- strip_data_svol(x-4) /1000000     # we now get sales volumes for a year from current quarter
+sales_vol_16Q1_Ms <- strip_data_svol(x-8) /1000000     # we then get sales volume for 2 years from current quarter
+
+# Code for YTD Volume as a % of previous year
+
+vol_2018_2017_percent <- sales_vol_18Q1_YTD_Ms / sales_vol_17Q1_Ms  
+
+
+```
+
+
+
+```{r, echo=FALSE}
+# CHUNK 4
+
+# Code to get capitalization rates averages 
+# Use simple mean arithmetic of (Q1 + Q2 + Q3 + Q4)/4 ~ Figures may therefore vary slightly from yearly cap rates averages available from RCA downloadable report which computes the annual avg cap rates on a daily continuous basis
+
+strip_data_cr <- function(a, b) {
+  
+      w <- c(mean(dat_1$nyc.cr[a:b]), mean(dat_1$sf.cr[a:b]), mean(dat_1$dc.cr[a:b]), mean(dat_1$bos.cr[a:b]), mean(dat_1$sj.cr[a:b]), mean(dat_1$la.cr[a:b]), mean(dat_1$sd.cr[a:b]), mean(dat_1$sea.cr[a:b]), mean(dat_1$hous.cr[a:b]), mean(dat_1$aus.cr[a:b]), mean(dat_1$dall.cr[a:b]), mean(dat_1$port.cr[a:b]), mean(dat_1$rd.cr[a:b]), mean(dat_1$nash.cr[a:b]), mean(dat_1$den.cr[a:b]), mean(dat_1$slc.cr[a:b]), mean(dat_1$pitts.cr[a:b]), mean(dat_1$atl.cr[a:b]))
+    return (w)
+  }
+
+cr_avg_18Q1_YTD <- strip_data_cr(x, x)
+cr_avg_07 <- strip_data_cr(x-45, x-42)
+cr_avg_17 <- strip_data_cr(x-4, x-1)
+cr_avg_16 <- strip_data_cr(x-8, x-5)
+
+
+```
+
+
+```{r, echo=FALSE}
+# CHUNK 5
+
+# Finding quarters for which market pricing per sf peaked
+
+date_peak_market1 <- c(which.max(dat_1$nyc.psf), which.max(dat_1$sf.psf), which.max(dat_1$dc.psf), which.max(dat_1$bos.psf), which.max(dat_1$sj.psf), which.max(dat_1$la.psf), which.max(dat_1$sd.psf), which.max(dat_1$sea.psf), which.max(dat_1$hous.psf), which.max(dat_1$aus.psf), which.max(dat_1$dall.psf), which.max(dat_1$port.psf), which.max(dat_1$rd.psf), which.max(dat_1$nash.psf), which.max(dat_1$den.psf), which.max(dat_1$slc.psf), which.max(dat_1$pitts.psf), which.max(dat_1$atl.psf))
+
+date_peak_market <- dat_1$X1[date_peak_market1]
+
+```
+
+
+
+```{r, echo=FALSE}
+#CHUNK 6
+
+# First convert the array of vectors in ic_markets into a matrix
+
+
+ic_table <- cbind(sales_vol_16Q1_Ms, sales_vol_17Q1_Ms, sales_vol_18Q1_YTD_Ms, vol_2018_2017_percent, cr_avg_07, cr_avg_16, cr_avg_18Q1_YTD, peak_psf)
+ic_matrix <- matrix(ic_table, nrow=18, ncol=8)
+
+
+#Large IC Markets Calculations
+AVG_sales_vol_16Q1_L <- (sum(ic_matrix[1:6, 1]) + ic_matrix[8, 1])/7
+AVG_sales_vol_17Q1_L <- (sum(ic_matrix[1:6, 2]) + ic_matrix[8, 2])/7
+AVG_sales_vol_18Q1_YTD_L  <- (sum(ic_matrix[1:6, 3]) + ic_matrix[8, 3])/7
+AVG_vol_2018_2017_percent_L <- (sum(ic_matrix[1:6, 4]) + ic_matrix[8, 4])/7
+AVG_cr_avg_16_L <- ((sum(ic_matrix[1:6, 5]) + ic_matrix[8, 5])/7)
+AVG_cr_avg_17_L <- ((sum(ic_matrix[1:6, 6]) + ic_matrix[8, 6])/7)
+AVG_cr_avg_18Q1_YTD_L <- ((sum(ic_matrix[1:6, 7]) + ic_matrix[8, 7])/7)
+AVG_peak_psf_L <- (sum(ic_matrix[1:6, 8]) + ic_matrix[8, 8])/7
+
+#Medium Markets
+AVG_sales_vol_16Q1_M <- (ic_matrix[7, 1]+ic_matrix[9, 1] + ic_matrix[11, 1] + ic_matrix[15, 1] + ic_matrix[18, 1])/5
+AVG_sales_vol_17Q1_M <- (ic_matrix[7, 2]+ic_matrix[9, 2] + ic_matrix[11, 2] + ic_matrix[15, 2] + ic_matrix[18, 2])/5
+AVG_sales_vol_18Q1_M <- (ic_matrix[7, 3]+ic_matrix[9, 3] + ic_matrix[11, 3] + ic_matrix[15, 3] + ic_matrix[18, 3])/5
+AVG_vol_2018_2017_percent_M <- (ic_matrix[7, 4]+ic_matrix[9, 4] + ic_matrix[11, 4] + ic_matrix[15, 4] + ic_matrix[18, 4])/5
+AVG_cr_avg_16_M <- (ic_matrix[7, 5]+ic_matrix[9, 5] + ic_matrix[11, 5] + ic_matrix[15, 5] + ic_matrix[18, 5])/5
+AVG_cr_avg_17_M <- (ic_matrix[7, 6]+ic_matrix[9, 6] + ic_matrix[11, 6] + ic_matrix[15, 6] + ic_matrix[18, 6])/5
+AVG_cr_avg_18Q1_YTD_M <- (ic_matrix[7, 7]+ic_matrix[9, 7] + ic_matrix[11, 7] + ic_matrix[15, 7] + ic_matrix[18, 7])/5
+AVG_peak_psf_M <- (ic_matrix[7, 8]+ic_matrix[9, 8] + ic_matrix[11, 8] + ic_matrix[15, 8] + ic_matrix[18, 8])/5
+
+#Small Markets
+AVG_sales_vol_16Q1_S <- (ic_matrix[10, 1]+ sum(ic_matrix[12:14, 1])+sum(ic_matrix[16:17, 1]))/6
+AVG_sales_vol_17Q1_S <- (ic_matrix[10, 2]+ sum(ic_matrix[12:14, 2])+sum(ic_matrix[16:17, 2]))/6
+AVG_sales_vol_18Q1_S <- (ic_matrix[10, 3]+ sum(ic_matrix[12:14, 3])+sum(ic_matrix[16:17, 3]))/6
+AVG_vol_2018_2017_percent_S <- (ic_matrix[10, 4]+ sum(ic_matrix[12:14, 4])+sum(ic_matrix[16:17, 4]))/6
+AVG_cr_avg_16_S <- (ic_matrix[10, 5]+ sum(ic_matrix[12:14, 5])+sum(ic_matrix[16:17, 5]))/6
+AVG_cr_avg_17_S <- (ic_matrix[10, 6]+ sum(ic_matrix[12:14, 6])+sum(ic_matrix[16:17, 6]))/6
+AVG_cr_avg_18Q1_YTD_S <- (ic_matrix[10, 7]+ sum(ic_matrix[12:14, 7])+sum(ic_matrix[16:17, 7]))/6
+AVG_peak_psf_S <- (ic_matrix[10, 8]+ sum(ic_matrix[12:14, 8])+sum(ic_matrix[16:17, 8]))/6
+
+#Combining Large, Medium, Small into single vectors 
+AVG_sales_vol_16Q1 <- c(AVG_sales_vol_16Q1_L, AVG_sales_vol_16Q1_M, AVG_sales_vol_16Q1_S)
+AVG_sales_vol_17Q1 <- c(AVG_sales_vol_17Q1_L, AVG_sales_vol_17Q1_M, AVG_sales_vol_17Q1_S)
+AVG_sales_vol_18Q1_YTD <- c(AVG_sales_vol_18Q1_YTD_L, AVG_sales_vol_18Q1_M, AVG_sales_vol_18Q1_S)
+AVG_vol_2018_2017_percent <- c(AVG_vol_2018_2017_percent_L, AVG_vol_2018_2017_percent_M, AVG_vol_2018_2017_percent_S)
+AVG_cr_avg_16 <- c(AVG_cr_avg_16_L, AVG_cr_avg_16_M, AVG_cr_avg_16_S)
+AVG_cr_avg_17 <- c(AVG_cr_avg_17_L, AVG_cr_avg_17_M, AVG_cr_avg_17_S)
+AVG_cr_avg_18Q1_YTD <- c(AVG_cr_avg_18Q1_YTD_L, AVG_cr_avg_18Q1_YTD_M, AVG_cr_avg_18Q1_YTD_S)
+AVG_peak_psf <- c(AVG_peak_psf_L, AVG_peak_psf_M, AVG_peak_psf_S)
+
+```
+
+            
+                                                                   
+```{r, echo=FALSE, warning=FALSE}
+# CHUNK 7
+
+#Creating the combined matrix (ic_markets) and subsequently a dataTable
+
+ic_markets <- data.frame(currency(sales_vol_16Q1_Ms), currency(sales_vol_17Q1_Ms), currency(sales_vol_18Q1_YTD_Ms), percent(vol_2018_2017_percent), percent(cr_avg_07), percent(cr_avg_16), percent(cr_avg_18Q1_YTD), currency(peak_psf), date_peak_market)
+rownames(ic_markets) <- c("NYC", "San Francisco", "DC", "Boston", "San Jose", "LA", "San Diego", "Seattle", "Houston", "Austin", "Dallas", "Portland", "Raleigh/Durham", "Nashville", "Denver", "Salt Lake City", "Pittsburgh", "Atlanta")
+colnames(ic_markets) <- c("Sales Volume 16Q1 (Ms)", "Sales Volume 17Q1 (Ms)", "Sales Volume 18Q1 YTD (Ms)", "2018 YTD Volume as % of 2017", "Cap Rate Avg 2007", "Cap Rate Avg 2016", "Cap Rate 18Q1 YTD", "Peak of Market Pricing/SF", "Date Peak Market")
+
+AVG_ic_markets <- data.frame(currency(AVG_sales_vol_16Q1), currency(AVG_sales_vol_17Q1), currency(AVG_sales_vol_18Q1_YTD), percent(AVG_vol_2018_2017_percent), percent(AVG_cr_avg_16), percent(AVG_cr_avg_17), percent(AVG_cr_avg_18Q1_YTD), currency(AVG_peak_psf))
+rownames(AVG_ic_markets) <- c("Total/Avg Large IC Markets", "Total/Avg Medium IC Markets", "Total/Avg Small IC Markets")
+colnames(AVG_ic_markets) <- c("Sales Volume 16Q1 (Ms)", "Sales Volume 17Q1 (Ms)", "Sales Volume 18Q1 YTD (Ms)", "2018 YTD Volume as % of 2017", "Cap Rate Avg 2007", "Cap Rate Avg 2016", "Cap Rate 18Q1 YTD", "Peak of Market Pricing/SF")
+
+formattable(ic_markets, list(
+  "Cap Rate 18Q1 YTD" = color_tile("white", "lightpink"),
+  "Cap Rate Avg 2016" = color_tile("white", "lightblue"),
+  "Cap Rate Avg 2007" = color_tile("white", "orange"),
+  "2018 YTD Volume as % of 2017" = formatter(
+    "span",
+    style = x ~ style(color=ifelse(x>0.7, "green", "black"))
+  )
+)
+)
+
+formattable(AVG_ic_markets)
+
+
+
+
+```
+
+
+
+
+#### Metrics key:
+
+prop  : _number of prop_  
+vol   : _sales volume_  
+units : _number of units_  
+psf   : _price per sf_  
+cr    : _capitalization rate_           
+            
+

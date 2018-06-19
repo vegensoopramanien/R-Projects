@@ -1,0 +1,50 @@
+---
+title: "Functional Analysis"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+We define the cdf $\phi$:
+
+```{r}
+phi <- function(x, mu, sigma) {
+  a = exp(-(((x-mu)^2)/(2*sigma^2)))
+  b = 1/(sqrt(2*pi*sigma^2))
+  b*a
+  
+}
+
+```
+
+```{r}
+# We define a simulation strategy for the random walk of a bijective homomorphism
+
+
+
+```
+
+$\phi$: R $\to$ R is a ring homomorphism iff 
+
+1/ $\phi$(a+b) =$\phi$(a) + $\phi$(b)  
+2/ $\phi$(ab) = $\phi$(a)$\phi$(b)  
+3/ $\phi$(1)=1 
+
+$\forall$ a, b $\in$ R
+
+
+```{r}
+foo <- function(x) {
+  phi = 9*x^2
+  phi
+}
+```
+
+
+```{r}
+x <- c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+2*x
+
+```
+
